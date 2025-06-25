@@ -1,10 +1,29 @@
+"""
+LLM Sparring Arena - Compare responses from ChatGPT and Claude
+
+DEPLOYMENT INSTRUCTIONS:
+1. Set environment variables for API keys (secure)
+2. Deploy to Streamlit Cloud, Railway, Render, or Heroku
+3. Add API keys as secrets/environment variables in your hosting platform
+
+SECURITY NOTE:
+- API keys are now loaded from environment variables
+- Safe to deploy with public repositories
+- Add your keys in the deployment platform's secrets/environment variables section
+"""
+
 import streamlit as st
 import openai
 import anthropic
 import time
 import json
+import os
 from datetime import datetime
 import pandas as pd
+
+# API KEYS - Using environment variables for security
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY')
 
 # Set page config
 st.set_page_config(
@@ -13,10 +32,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# API KEYS - REPLACE WITH YOUR ACTUAL KEYS
-OPENAI_API_KEY = "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"
-ANTHROPIC_API_KEY = "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"
 
 # Initialize session state
 if 'conversation_history' not in st.session_state:
@@ -46,8 +61,7 @@ Be objective and specific in your analysis."""
 def initialize_clients():
     """Initialize API clients"""
     try:
-        if OPENAI_API_KEY == "your-openai-api-key-here" or ANTHROPIC_API_KEY == "your-anthropic-api-key-here":
-            st.error("❌ Please replace the placeholder API keys in the code with your actual keys!")
+        if not OPENAI_API_KEY or not ANTHROPIC_API_KEY:
             return None, None, False
             
         openai_client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -227,15 +241,15 @@ Be objective and specific in your analysis."""
     
     # API Status
     st.subheader("🔑 API Status")
-    if OPENAI_API_KEY != "your-openai-api-key-here":
+    if OPENAI_API_KEY:
         st.success("✅ OpenAI API Key Configured")
     else:
-        st.error("❌ OpenAI API Key Not Set")
+        st.error("❌ OpenAI API Key Missing")
         
-    if ANTHROPIC_API_KEY != "your-anthropic-api-key-here":
+    if ANTHROPIC_API_KEY:
         st.success("✅ Anthropic API Key Configured")
     else:
-        st.error("❌ Anthropic API Key Not Set")
+        st.error("❌ Anthropic API Key Missing")
     
     # Clear conversation
     if st.button("🗑️ Clear History"):
@@ -251,13 +265,27 @@ st.info("🚀 **Updated with the latest 2025 models!** GPT-4.1 and Claude Sonnet
 # Check if API keys are configured
 openai_client, anthropic_client, clients_ready = initialize_clients()
 
+if not OPENAI_API_KEY or not ANTHROPIC_API_KEY:
+    st.error("❌ **API Keys Missing!** Please configure your environment variables:")
+    st.code("""
+# Add these environment variables in your deployment platform:
+OPENAI_API_KEY=your-actual-openai-key-here
+ANTHROPIC_API_KEY=your-actual-anthropic-key-here
+
+# For local development, you can set them in your terminal:
+# Windows:
+set OPENAI_API_KEY=your-key-here
+set ANTHROPIC_API_KEY=your-key-here
+
+# Mac/Linux:
+export OPENAI_API_KEY=your-key-here
+export ANTHROPIC_API_KEY=your-key-here
+    """)
+    st.info("💡 **For Streamlit Cloud:** Add these keys in your app's Settings → Secrets section")
+    st.stop()
+
 if not clients_ready:
-    st.error("❌ Please configure your API keys in the code before running the app.")
-    st.code('''
-# Find these lines at the top of app.py and replace with your actual keys:
-OPENAI_API_KEY = "your-actual-openai-key-here"
-ANTHROPIC_API_KEY = "your-actual-anthropic-key-here"
-    ''')
+    st.error("❌ Failed to initialize API clients. Please check your API keys.")
     st.stop()
 
 # Main prompt input
@@ -440,6 +468,6 @@ st.markdown("""
 <div style='text-align: center; color: #666;'>
     <p>🥊 LLM Sparring Arena - Compare, Contrast, and Improve with AI Models</p>
     <p><small>🚀 Now featuring the latest models: GPT-4.1 & Claude Sonnet 4 (2025)</small></p>
-    <p><small>Remember to keep your API keys secure and monitor your usage costs!</small></p>
+    <p><small>🔐 Securely deployed with environment variables</small></p>
 </div>
 """, unsafe_allow_html=True)
